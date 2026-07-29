@@ -1,0 +1,124 @@
+:root {
+  /* Bitcoin DeFi — dark (default) */
+  --bg: #030304;
+  --surface: #0f1115;
+  --surface-glass: rgba(255, 255, 255, 0.05);
+  --text: #94a3b8;
+  --text-h: #ffffff;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  --accent: #f7931a;
+  --accent-2: #ea580c;
+  --accent-3: #5c19f7;
+  --accent-bg: rgba(247, 147, 26, 0.12);
+  --accent-border: rgba(247, 147, 26, 0.5);
+
+  --code-bg: rgba(255, 255, 255, 0.06);
+  --shadow: rgba(0, 0, 0, 0.4) 0 10px 30px -5px;
+  --glow: 0 0 20px -5px rgba(234, 88, 12, 0.5);
+  --glow-strong: 0 0 30px -5px rgba(247, 147, 26, 0.6);
+  --glow-gold: 0 0 20px rgba(92, 25, 247, 0.35);
+
+  --heading: 'Space Grotesk', system-ui, sans-serif;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  font: 18px/150% var(--sans);
+  letter-spacing: 0.1px;
+  color-scheme: dark light;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fbf9f6;
+    --surface: #ffffff;
+    --surface-glass: rgba(0, 0, 0, 0.03);
+    --text: #5b5548;
+    --text-h: #0b0a08;
+    --border: rgba(0, 0, 0, 0.1);
+    --border-strong: rgba(0, 0, 0, 0.2);
+
+    --accent: #ea580c;
+    --accent-2: #c2410c;
+    --accent-3: #5c19f7;
+    --accent-bg: rgba(234, 88, 12, 0.08);
+    --accent-border: rgba(234, 88, 12, 0.4);
+
+    --code-bg: rgba(0, 0, 0, 0.05);
+    --shadow: rgba(0, 0, 0, 0.08) 0 10px 30px -5px;
+    --glow: 0 0 20px -5px rgba(234, 88, 12, 0.25);
+    --glow-strong: 0 0 30px -5px rgba(234, 88, 12, 0.35);
+    --glow-gold: 0 0 20px rgba(168, 113, 10, 0.2);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--heading);
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0;
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+.gradient-text {
+  background: linear-gradient(to right, var(--accent), var(--accent-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  border-radius: 4px;
+  color: var(--accent);
+  background: var(--code-bg);
+  padding: 3px 7px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
