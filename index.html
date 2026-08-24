@@ -15,6 +15,19 @@
       content="Johan Chacon Chacon — Backend & Blockchain Engineer. Node.js, TypeScript, Go, Solidity, Docker/Kubernetes, Terraform."
     />
     <title>Johan Chacon Chacon — Backend & Blockchain Engineer</title>
+    <script>
+      // Runs before first paint to avoid a flash of the wrong theme.
+      (function () {
+        var stored = localStorage.getItem("theme");
+        var theme =
+          stored === "light" || stored === "dark"
+            ? stored
+            : window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
