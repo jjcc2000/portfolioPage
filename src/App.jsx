@@ -6,7 +6,7 @@ function getInitialTheme() {
   // The inline script in index.html already set this on <html> before
   // first paint; just read it back so React's state agrees with the DOM.
   return document.documentElement.getAttribute("data-theme") === "light"
-    ? "light"
+    ? "z"
     : "dark";
 }
 
@@ -47,9 +47,9 @@ const EMAIL = "johanchaconchacon@gmail.com";
 // Shown immediately and used as a fallback if the GitHub API is
 // unreachable or rate-limited (60 unauthenticated requests/hour/IP).
 const FALLBACK_PROFILE = {
-  name: "Johan Chacon Chacon",
-  bio: "Nodejs | TypeScript | Golang | Java | Solidity | Docker/Kubernetes | Terraform",
-  avatar_url: "https://avatars.githubusercontent.com/u/114323459?v=4",
+  // name: "Johan Chacon Chacon",
+  // bio: "Nodejs | TypeScript | Golang | Java | Solidity | Docker/Kubernetes | Terraform",
+  // avatar_url: "https://avatars.githubusercontent.com/u/114323459?v=4",
 };
 
 // Primary way to attach a hover-preview video to a project: open the repo
@@ -61,7 +61,7 @@ const FALLBACK_PROFILE = {
 // This map is a fallback/override for repos where you'd rather not touch
 // the Website field (e.g. it's already used for a live demo link).
 const PROJECT_VIDEOS = {
-  "Cross-Chain-Bridge": "dQw4w9WgXcQ",
+  // "Cross-Chain-Bridge": "dQw4w9WgXcQ",
 };
 
 function extractYouTubeId(url) {
@@ -81,59 +81,140 @@ function attachVideos(list) {
 }
 
 const FALLBACK_PROJECTS = attachVideos([
-  {
-    name: "Cross-Chain-Bridge",
-    description:
-      "A cross-chain bridge for moving assets between Arbitrum, Sepolia and Polygon.",
-    language: "TypeScript",
-    url: `${GITHUB_URL}/Cross-Chain-Bridge`,
-  },
-  {
-    name: "blockchainIndexer",
-    description:
-      "Scalable indexer that listens to smart contract events and persists them to PostgreSQL.",
-    language: "TypeScript",
-    url: `${GITHUB_URL}/blockchainIndexer`,
-  },
-  {
-    name: "AaveProtocol",
-    description:
-      "Solidity contracts exploring Aave-style lending protocol mechanics.",
-    language: "Solidity",
-    url: `${GITHUB_URL}/AaveProtocol`,
-  },
-  {
-    name: "meta-relayer",
-    description:
-      "Ethereum transaction relayer API for meta-transactions, built with Express and ethers.js.",
-    language: "JavaScript",
-    url: `${GITHUB_URL}/meta-relayer`,
-  },
-  {
-    name: "fee-recommendation-microservice",
-    description:
-      "Microservice that recommends transaction fees for on-chain activity.",
-    language: "TypeScript",
-    url: `${GITHUB_URL}/fee-recommendation-microservice`,
-  },
-  {
-    name: "tradingBotKalshi",
-    description: "Automated trading bot for the Kalshi prediction market.",
-    language: "Python",
-    url: `${GITHUB_URL}/tradingBotKalshi`,
-  },
+  // {
+  //   name: "Cross-Chain-Bridge",
+  //   description:
+  //     "A cross-chain bridge for moving assets between Arbitrum, Sepolia and Polygon.",
+  //   language: "TypeScript",
+  //   url: `${GITHUB_URL}/Cross-Chain-Bridge`,
+  // },
+  // {
+  //   name: "blockchainIndexer",
+  //   description:
+  //     "Scalable indexer that listens to smart contract events and persists them to PostgreSQL.",
+  //   language: "TypeScript",
+  //   url: `${GITHUB_URL}/blockchainIndexer`,
+  // },
+  // {
+  //   name: "AaveProtocol",
+  //   description:
+  //     "Solidity contracts exploring Aave-style lending protocol mechanics.",
+  //   language: "Solidity",
+  //   url: `${GITHUB_URL}/AaveProtocol`,
+  // },
+  // {
+  //   name: "meta-relayer",
+  //   description:
+  //     "Ethereum transaction relayer API for meta-transactions, built with Express and ethers.js.",
+  //   language: "JavaScript",
+  //   url: `${GITHUB_URL}/meta-relayer`,
+  // },
+  // {
+  //   name: "fee-recommendation-microservice",
+  //   description:
+  //     "Microservice that recommends transaction fees for on-chain activity.",
+  //   language: "TypeScript",
+  //   url: `${GITHUB_URL}/fee-recommendation-microservice`,
+  // },
+  // {
+  //   name: "tradingBotKalshi",
+  //   description: "Automated trading bot for the Kalshi prediction market.",
+  //   language: "Python",
+  //   url: `${GITHUB_URL}/tradingBotKalshi`,
+  // },
 ]);
 
-function App() {
+function App() {  
   const [profile, setProfile] = useState(FALLBACK_PROFILE);
   const [projects, setProjects] = useState(FALLBACK_PROJECTS);
   const [previewing, setPreviewing] = useState(null);
   const [theme, setTheme] = useState(getInitialTheme);
+  const [btcPrice, setBtcPrice] = useState(null);
+  const [btcChange24h, setBtcChange24h] = useState(null);
+  const [btcAmount, setBtcAmount] = useState("1");
+  const [usdAmount, setUsdAmount] = useState("");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  // Live BTC/USD price, polled every 30s. CoinGecko's public endpoint needs
+  // no API key and is CORS-friendly, same as the GitHub calls below.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPrice() {
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true",
+        );
+        if (!res.ok) throw new Error("CoinGecko request failed");
+        const data = await res.json();
+        if (!cancelled && data.bitcoin) {
+          setBtcPrice(data.bitcoin.usd);
+          setBtcChange24h(data.bitcoin.usd_24h_change);
+        }
+      } catch {
+        // Keep showing the last successfully fetched price, if any
+      }
+    }
+
+    loadPrice();
+    const interval = setInterval(loadPrice, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Re-sync the USD field whenever a fresh price comes in, for whatever
+  // BTC amount is currently entered.
+  useEffect(() => {
+    if (btcPrice && btcAmount !== "" && !isNaN(btcAmount)) {
+      setUsdAmount((Number(btcAmount) * btcPrice).toFixed(2));
+    }
+  }, [btcPrice]);
+
+  // Plain-decimal only (digits + at most one dot) — keeps the value's
+  // format independent of the visitor's browser locale, unlike a native
+  // <input type="number">, which redisplays with a locale decimal
+  // separator (e.g. "80504,00") even though the underlying .value stays
+  // dot-based.
+  const isPlainDecimal = (value) => /^\d*\.?\d*$/.test(value);
+
+  // Comma-groups the integer part for display only (e.g. "80504.00" ->
+  // "80,504.00"); the underlying state stays a plain digits-and-dot
+  // string so the math and isPlainDecimal validation are unaffected.
+  function formatWithCommas(value) {
+    if (value === "") return "";
+    const [intPart, decPart] = value.split(".");
+    const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return decPart !== undefined ? `${grouped}.${decPart}` : grouped;
+  }
+
+  function handleBtcChange(e) {
+    const value = e.target.value;
+    if (!isPlainDecimal(value)) return;
+    setBtcAmount(value);
+    if (btcPrice && value !== "" && !isNaN(value)) {
+      setUsdAmount((Number(value) * btcPrice).toFixed(2));
+    } else {
+      setUsdAmount("");
+    }
+  }
+
+  function handleUsdChange(e) {
+    // Strip the display commas back out before validating/storing.
+    const value = e.target.value.replace(/,/g, "");
+    if (!isPlainDecimal(value)) return;
+    setUsdAmount(value);
+    if (btcPrice && value !== "" && !isNaN(value)) {
+      setBtcAmount((Number(value) / btcPrice).toFixed(8));
+    } else {
+      setBtcAmount("");
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -252,6 +333,58 @@ function App() {
         </div>
 
         <div className="hero-right">
+          <div className="btc-widget btc-widget-compact">
+            <div className="btc-widget-head">
+              <span className="btc-live-dot" aria-hidden="true"></span>
+              <span className="btc-label">BTC/USD</span>
+              {btcPrice !== null ? (
+                <>
+                  <span className="btc-price">
+                    $
+                    {btcPrice.toLocaleString("en-US", {
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                  {btcChange24h !== null && (
+                    <span
+                      className={`btc-change ${btcChange24h >= 0 ? "up" : "down"}`}
+                    >
+                      {btcChange24h >= 0 ? "▲" : "▼"}{" "}
+                      {Math.abs(btcChange24h).toFixed(2)}%{" "}
+                      <span className="btc-change-period">1D</span>
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="btc-price btc-price-loading">Loading…</span>
+              )}
+            </div>
+
+            <div className="btc-converter">
+              <label className="btc-field">
+                <span>BTC</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={btcAmount}
+                  onChange={handleBtcChange}
+                  placeholder="0.00"
+                />
+              </label>
+              <span className="btc-equals">=</span>
+              <label className="btc-field">
+                <span>USD</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={formatWithCommas(usdAmount)}
+                  onChange={handleUsdChange}
+                  placeholder="0.00"
+                />
+              </label>
+            </div>
+          </div>
+
           <p className="bio">
             I build backend systems and on-chain infrastructure — from
             cross-chain bridges and smart-contract indexers to
