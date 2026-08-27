@@ -133,6 +133,8 @@ function App() {
   const [btcChange24h, setBtcChange24h] = useState(null);
   const [btcAmount, setBtcAmount] = useState("1");
   const [usdAmount, setUsdAmount] = useState("");
+  const [githubError, setGithubError] = useState(false);
+  const [btcError, setBtcError] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -154,9 +156,12 @@ function App() {
         if (!cancelled && data.bitcoin) {
           setBtcPrice(data.bitcoin.usd);
           setBtcChange24h(data.bitcoin.usd_24h_change);
+          setBtcError(false);
         }
       } catch {
-        // Keep showing the last successfully fetched price, if any
+        // Keep showing the last successfully fetched price, if any, but
+        // surface it so a first-load failure doesn't show "Loading…" forever.
+        if (!cancelled) setBtcError(true);
       }
     }
 
@@ -253,9 +258,12 @@ function App() {
         if (!cancelled) {
           setProfile(user);
           if (reposWithVideos.length) setProjects(reposWithVideos);
+          setGithubError(false);
         }
       } catch {
-        // GitHub unreachable/rate-limited — fallback data already showing
+        // GitHub unreachable/rate-limited — surface it so the UI can show
+        // a real fallback state instead of silently rendering blank data.
+        if (!cancelled) setGithubError(true);
       }
     }
 
@@ -289,12 +297,21 @@ function App() {
 
       <section id="hero">
         <div className="hero-left">
-          <img
-            className="avatar"
-            src={profile.avatar_url}
-            alt={profile.name}
-          />
-          <h1 className="hero-name">{profile.name}</h1>
+          {profile.avatar_url ? (
+            <img
+              className="avatar"
+              src={profile.avatar_url}
+              alt={profile.name || "Profile avatar"}
+            />
+          ) : (
+            <div className="avatar avatar-placeholder" aria-hidden="true" />
+          )}
+          <h1 className="hero-name">{profile.name || "Portfolio"}</h1>
+          {githubError && (
+            <p className="data-error-note">
+              Couldn't load live GitHub data.
+            </p>
+          )}
           <p className="hero-role gradient-text">
             Backend &amp; Blockchain Engineer
           </p>
@@ -356,7 +373,9 @@ function App() {
                   )}
                 </>
               ) : (
-                <span className="btc-price btc-price-loading">Loading…</span>
+                <span className="btc-price btc-price-loading">
+                  {btcError ? "Price unavailable" : "Loading…"}
+                </span>
               )}
             </div>
 
@@ -387,7 +406,7 @@ function App() {
 
           <p className="bio">
             I build backend systems and on-chain infrastructure — from
-            cross-chain bridges and smart-contract indexers to
+            cross-chain bridges and smart-contract indexers to APIs and
             Kubernetes-orchestrated microservices.
           </p>
 
@@ -421,53 +440,59 @@ function App() {
           <span className="gradient-text">Projects</span>
         </h2>
 
-        <div className="project-grid">
-          {projects.map((project) => (
-            <a
-              key={project.name}
-              className="project-card"
-              href={project.url}
-              target="_blank"
-              rel="noreferrer"
-              onMouseEnter={() =>
-                project.videoId && setPreviewing(project.name)
-              }
-              onMouseLeave={() => setPreviewing(null)}
-              onFocus={() => project.videoId && setPreviewing(project.name)}
-              onBlur={() => setPreviewing(null)}
-            >
-              <div className="project-card-head">
-                <h3>{project.name}</h3>
-                <ExternalLink
-                  size={16}
-                  strokeWidth={1.75}
-                  className="external-icon"
-                />
-              </div>
-              {project.description && <p>{project.description}</p>}
-              <div className="card-meta">
-                {project.language && (
-                  <span className="lang-badge">{project.language}</span>
-                )}
-                {project.videoId && (
-                  <span className="video-badge">
-                    <Play size={11} strokeWidth={2} fill="currentColor" />
-                    Watch
-                  </span>
-                )}
-              </div>
-              {project.videoId && previewing === project.name && (
-                <div className="project-video">
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${project.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&loop=1&playlist=${project.videoId}`}
-                    title={`${project.name} walkthrough`}
-                    allow="autoplay; encrypted-media"
+        {projects.length === 0 ? (
+          <p className="empty-note">No projects to display right now.</p>
+        ) : (
+          <div className="project-grid">
+            {projects.map((project) => (
+              <a
+                key={project.name}
+                className="project-card"
+                href={project.url}
+                target="_blank"
+                rel="noreferrer"
+                onMouseEnter={() =>
+                  project.videoId && setPreviewing(project.name)
+                }
+                onMouseLeave={() => setPreviewing(null)}
+                onFocus={() =>
+                  project.videoId && setPreviewing(project.name)
+                }
+                onBlur={() => setPreviewing(null)}
+              >
+                <div className="project-card-head">
+                  <h3>{project.name}</h3>
+                  <ExternalLink
+                    size={16}
+                    strokeWidth={1.75}
+                    className="external-icon"
                   />
                 </div>
-              )}
-            </a>
-          ))}
-        </div>
+                {project.description && <p>{project.description}</p>}
+                <div className="card-meta">
+                  {project.language && (
+                    <span className="lang-badge">{project.language}</span>
+                  )}
+                  {project.videoId && (
+                    <span className="video-badge">
+                      <Play size={11} strokeWidth={2} fill="currentColor" />
+                      Watch
+                    </span>
+                  )}
+                </div>
+                {project.videoId && previewing === project.name && (
+                  <div className="project-video">
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${project.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&loop=1&playlist=${project.videoId}`}
+                      title={`${project.name} walkthrough`}
+                      allow="autoplay; encrypted-media"
+                    />
+                  </div>
+                )}
+              </a>
+            ))}
+          </div>
+        )}
       </section>
 
       <section id="contact">
